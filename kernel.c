@@ -2014,9 +2014,9 @@ void gui_init() {
 }
 
 void kernel_main(unsigned int magic, struct multiboot_info* mbi) {
-    print("KevosOS 0.1.3 Loaded", 0, 0, 0x0E);
-    delay(1000)
-    clear()
+    print("KevosOS 0.1.3 Kernel Loaded", 0, 0, 0x0E);
+    delay(1000);
+    clear();
     //if (fs_init()) {
     //    print("Mounted /", 0, 0, 0x0F);
     //} else {
