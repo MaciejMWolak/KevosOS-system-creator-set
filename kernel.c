@@ -1434,68 +1434,6 @@ struct KevosOS_Framework {
     void (*poweroff_system)();
 };
 
-void exec(const char* path) {
-    struct KevosOS_Framework* os = (struct KevosOS_Framework*)0x400000;
-    
-    os->refresh_screen       = tui_refresh_screen;
-    os->create_window        = tui_create_window;
-    os->close_active_window  = tui_close_active_window;
-    os->add_component        = ui_add_component;
-    os->show_msgbox          = show_msgbox;
-    os->set_bottom_help      = ui_set_bottom_help;
-    
-    os->file_exists          = exists;
-    os->file_list            = list;
-    os->file_remove          = remove;
-    os->file_write           = write;
-    os->file_mkdir           = mkdir;
-    
-    os->clear_screen         = clear;
-    os->print_raw            = print;
-    os->reboot_system        = reboot;
-    os->poweroff_system      = acpi_real_pc_shutdown_run;
-
-    uint32_t first_cluster = 0;
-    uint32_t file_size = 0;
-    
-    if (!open(path, &first_cluster, &file_size)) {
-        show_msgbox("System", "Program error!");
-        return;
-    }
-
-    if (file_size == 0) return;
-
-    uint8_t* program_buffer = (uint8_t*)0x500000;
-    uint32_t current_cluster = first_cluster;
-    uint32_t bytes_left = file_size;
-    uint32_t buffer_offset = 0;
-
-    extern uint8_t cluster_scratchpad[8192]; 
-    extern uint32_t Bytes_Per_Cluster;
-
-    while (current_cluster > 0 && current_cluster < 0x0FFFFFF8 && bytes_left > 0) {
-        fs_read_cluster(current_cluster, cluster_scratchpad);
-        
-        uint32_t bytes_to_copy = (bytes_left > Bytes_Per_Cluster) ? Bytes_Per_Cluster : bytes_left;
-        
-        for (uint32_t i = 0; i < bytes_to_copy; i++) {
-            program_buffer[buffer_offset + i] = cluster_scratchpad[i];
-        }
-        
-        buffer_offset += bytes_to_copy;
-        bytes_left -= bytes_to_copy;
-        
-        current_cluster = fs_get_next_cluster(current_cluster);
-    }
-
-    void (*program_entry)() = (void (*)())program_buffer;
-    program_entry();
-    
-    tui_refresh_screen();
-}
-
-
-
 
 void launcher() {
     int winl = tui_create_window("System", 0, 0, 40, 16);
